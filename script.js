@@ -366,33 +366,34 @@ async function tambahData() {
 
     }
 
+ // SIMPAN KE FIRESTORE
 
-    // SIMPAN KE FIRESTORE
+await db.collection("kas").add({
 
-    await db.collection("kas").add({
+  tanggal: tanggal,
 
-      tanggal: tanggal,
+  nama: nama,
 
-      nama: nama,
+  jumlah: jumlah,
 
-      jumlah: jumlah,
+  keterangan: keterangan,
 
-      keterangan: keterangan,
+  tipe: tipe,
 
-      tipe: tipe,
+  createdAt:
+    firebase.firestore.FieldValue.serverTimestamp(),
 
-      createdAt:
-        firebase.firestore.FieldValue.serverTimestamp(),
+  createdBy:
+    firebase.auth().currentUser
+      ? firebase.auth().currentUser.email
+      : "unknown"
 
-      createdBy:
-        getCurrentUserUsername()
-
-    });
+});
 
 
-    alert(
-      "Data berhasil disimpan ke database! ✅"
-    );
+alert(
+  "Data berhasil disimpan ke database! ✅"
+);
 
 
     // RESET FORM
