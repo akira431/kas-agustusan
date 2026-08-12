@@ -1,0 +1,126 @@
+  `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard • Kas 17 Agustus</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--red:#dc2626;--red2:#991b1b;--green:#16a34a;--blue:#2563eb;--ink:#111827;--muted:#6b7280;--bg:#f6f7fb;--line:#e5e7eb}
+    body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+    header{
+      background:linear-gradient(120deg,#991b1b,#dc2626);color:#fff;padding:18px 5%;
+      position:sticky;top:0;z-index:10;box-shadow:0 5px 18px rgba(0,0,0,.12)
+    }
+    .nav{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:15px}
+    .brand{display:flex;align-items:center;gap:12px}.brand-icon{font-size:30px}
+    .brand h1{margin:0;font-size:20px}.brand small{opacity:.8}
+    .userbox{display:flex;align-items:center;gap:10px}
+    .role{padding:7px 10px;background:rgba(255,255,255,.14);border-radius:999px;font-size:12px}
+    .logout{border:0;background:#fff;color:#991b1b;padding:9px 13px;border-radius:9px;font-weight:700;cursor:pointer}
+    main{max-width:1180px;margin:auto;padding:26px 5% 50px}
+    .welcome{margin-bottom:22px}.welcome h2{margin:0 0 5px;font-size:27px}.welcome p{margin:0;color:var(--muted)}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+    .stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 4px 14px rgba(15,23,42,.04)}
+    .stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;font-weight:600}
+    .stat-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:#fef2f2}
+    .stat h3{font-size:25px;margin:14px 0 0}.income h3{color:var(--green)}.expense h3{color:var(--red)}.balance h3{color:var(--blue)}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start}
+    .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 4px 14px rgba(15,23,42,.04)}
+    .card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+    .card-title h3{margin:0;font-size:17px}.card-title span{font-size:12px;color:var(--muted)}
+    label{display:block;font-size:12px;font-weight:700;color:#374151;margin:12px 0 6px}
+    input,select{width:100%;height:43px;border:1px solid #d1d5db;border-radius:10px;padding:0 12px;outline:none;font-size:14px;background:#fff}
+    input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,.08)}
+    .save{width:100%;height:45px;margin-top:16px;border:0;border-radius:10px;background:var(--red);color:#fff;font-weight:700;cursor:pointer}
+    .save:hover{background:var(--red2)}
+    .toolbar{display:flex;gap:9px;margin-bottom:15px}
+    .toolbar input{flex:1}.filter{width:150px}
+    .empty{text-align:center;padding:35px 15px;color:var(--muted);font-size:14px}
+    .item{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;gap:14px}
+    .item-main{min-width:0}.item-name{font-weight:800}.item-meta{font-size:12px;color:var(--muted);margin-top:4px}
+    .item-desc{font-size:13px;margin-top:8px;color:#4b5563}
+    .amount{text-align:right;white-space:nowrap;font-weight:800}.masuk{color:var(--green)}.keluar{color:var(--red)}
+    .actions{margin-top:8px;display:flex;gap:6px;justify-content:flex-end}.action{border:0;border-radius:7px;padding:6px 9px;font-size:11px;cursor:pointer}
+    .edit{background:#eff6ff;color:#1d4ed8}.hapus{background:#fef2f2;color:#b91c1c}
+    .modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:20;align-items:center;justify-content:center;padding:20px}
+    .modal-box{background:#fff;width:min(100%,430px);border-radius:18px;padding:22px}
+    .modal-actions{display:flex;gap:8px;margin-top:18px}.modal-actions button{flex:1;height:42px;border:0;border-radius:9px;cursor:pointer;font-weight:700}
+    .cancel{background:#f3f4f6}.confirm{background:var(--red);color:#fff}
+    @media(max-width:850px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.nav{align-items:flex-start}.role{display:none}}
+    @media(max-width:520px){header{padding:14px 4%}main{padding:20px 4% 40px}.brand h1{font-size:17px}.userbox{gap:6px}.logout{padding:8px 10px}.stats{gap:10px}.stat{padding:16px}.toolbar{flex-direction:column}.filter{width:100%}.item{padding:12px}}
+  </style>
+</head>
+<body onload="initDashboard()">
+  <header>
+    <div class="nav">
+      <div class="brand">
+        <div class="brand-icon">🇮🇩</div>
+        <div><h1>Kas 17 Agustus</h1><small>Dashboard Keuangan</small></div>
+      </div>
+      <div class="userbox">
+        <span class="role" id="role">Memuat...</span>
+        <button class="logout" onclick="logout()">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="welcome">
+      <h2>Ringkasan Kas</h2>
+      <p>Kelola pemasukan dan pengeluaran kegiatan dengan lebih rapi.</p>
+    </div>
+
+    <section class="stats">
+      <div class="stat income"><div class="stat-top"><span>Total Pemasukan</span><span class="stat-icon">↗</span></div><h3 id="totalMasuk">Rp0</h3></div>
+      <div class="stat expense"><div class="stat-top"><span>Total Pengeluaran</span><span class="stat-icon">↘</span></div><h3 id="totalKeluar">Rp0</h3></div>
+      <div class="stat balance"><div class="stat-top"><span>Saldo Saat Ini</span><span class="stat-icon">💰</span></div><h3 id="saldo">Rp0</h3></div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <div class="card-title"><h3>Tambah Transaksi</h3><span>Isi data kas</span></div>
+        <label for="tanggal">Tanggal</label>
+        <input type="date" id="tanggal">
+        <label for="nama">Nama / Sumber</label>
+        <input type="text" id="nama" placeholder="Contoh: Iuran warga">
+        <label for="jumlah">Jumlah</label>
+        <input type="number" id="jumlah" min="0" placeholder="Contoh: 50000">
+        <label for="keterangan">Keterangan</label>
+        <input type="text" id="keterangan" placeholder="Contoh: Iuran Agustus">
+        <label for="tipe">Jenis transaksi</label>
+        <select id="tipe"><option value="masuk">Pemasukan</option><option value="keluar">Pengeluaran</option></select>
+        <button class="save" onclick="tambahData()">+ Simpan Transaksi</button>
+      </section>
+
+      <section class="card">
+        <div class="card-title"><h3>Riwayat Kas</h3><span id="jumlahData">0 transaksi</span></div>
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="🔎 Cari nama atau keterangan..." oninput="loadData()">
+          <select id="filter" class="filter" onchange="loadData()">
+            <option value="semua">Semua transaksi</option>
+            <option value="masuk">Pemasukan</option>
+            <option value="keluar">Pengeluaran</option>
+          </select>
+        </div>
+        <div id="data"></div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal" id="editModal">
+    <div class="modal-box">
+      <div class="card-title"><h3>Edit Transaksi</h3><span>Perbarui data</span></div>
+      <input type="hidden" id="editIndex">
+      <label>Tanggal</label><input type="date" id="editTanggal">
+      <label>Nama / Sumber</label><input type="text" id="editNama">
+      <label>Jumlah</label><input type="number" id="editJumlah" min="0">
+      <label>Keterangan</label><input type="text" id="editKeterangan">
+      <label>Jenis</label><select id="editTipe"><option value="masuk">Pemasukan</option><option value="keluar">Pengeluaran</option></select>
+      <div class="modal-actions"><button class="cancel" onclick="closeEdit()">Batal</button><button class="confirm" onclick="simpanEdit()">Simpan Perubahan</button></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

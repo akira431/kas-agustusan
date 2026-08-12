@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Kas 17 Agustus • Login</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+
+      font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+      background:
+        radial-gradient(
+          circle at top left,
+          rgba(255,255,255,.25),
+          transparent 35%
+        ),
+        linear-gradient(
+          135deg,
+          #991b1b 0%,
+          #dc2626 45%,
+          #ef4444 100%
+        );
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 20px;
+
+      color: #1f2937;
+    }
+
+
+    /* =========================
+       CONTAINER
+    ========================= */
+
+    .login-wrap {
+      width: 100%;
+      max-width: 420px;
+    }
+
+
+    /* =========================
+       LOGO / BRAND
+    ========================= */
+
+    .brand {
+      text-align: center;
+      color: white;
+
+      margin-bottom: 22px;
+    }
+
+    .flag {
+      width: 70px;
+      height: 70px;
+
+      margin: auto;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: rgba(255,255,255,.15);
+
+      border: 1px solid rgba(255,255,255,.25);
+
+      border-radius: 20px;
+
+      font-size: 38px;
+
+      backdrop-filter: blur(10px);
+
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.15);
+    }
+
+    .brand h1 {
+      margin: 14px 0 5px;
+
+      font-size: 27px;
+      font-weight: 800;
+    }
+
+    .brand p {
+      margin: 0;
+
+      font-size: 13px;
+
+      color: rgba(255,255,255,.85);
+    }
+
+
+    /* =========================
+       CARD
+    ========================= */
+
+    .card {
+      background: rgba(255,255,255,.98);
+
+      border-radius: 24px;
+
+      padding: 32px;
+
+      box-shadow:
+        0 25px 60px rgba(0,0,0,.25);
+
+      border: 1px solid rgba(255,255,255,.7);
+    }
+
+
+    .card h2 {
+      margin: 0 0 7px;
+
+      color: #991b1b;
+
+      font-size: 23px;
+
+      font-weight: 800;
+    }
+
+
+    .subtitle {
+      margin: 0 0 25px;
+
+      color: #6b7280;
+
+      font-size: 14px;
+
+      line-height: 1.5;
+    }
+
+
+    /* =========================
+       ERROR
+    ========================= */
+
+    .error {
+      display: none;
+
+      margin-bottom: 16px;
+
+      padding: 12px 14px;
+
+      border-radius: 11px;
+
+      background: #fee2e2;
+
+      border: 1px solid #fecaca;
+
+      color: #991b1b;
+
+      font-size: 13px;
+
+      line-height: 1.4;
+    }
+
+
+    /* =========================
+       FORM
+    ========================= */
+
+    .field {
+      margin-bottom: 17px;
+    }
+
+
+    label {
+      display: block;
+
+      margin-bottom: 7px;
+
+      font-size: 13px;
+
+      font-weight: 700;
+
+      color: #374151;
+    }
+
+
+    .input-wrap {
+      position: relative;
+    }
+
+
+    input {
+      width: 100%;
+
+      height: 48px;
+
+      padding: 0 14px;
+
+      border: 1px solid #d1d5db;
+
+      border-radius: 12px;
+
+      background: #fff;
+
+      color: #111827;
+
+      font-size: 14px;
+
+      outline: none;
+
+      transition: .2s;
+    }
+
+
+    input::placeholder {
+      color: #9ca3af;
+    }
+
+
+    input:focus {
+      border-color: #dc2626;
+
+      box-shadow:
+        0 0 0 4px rgba(220,38,38,.10);
+    }
+
+
+    /* =========================
+       PASSWORD TOGGLE
+    ========================= */
+
+    .toggle {
+      position: absolute;
+
+      right: 6px;
+      top: 6px;
+
+      width: 36px;
+      height: 36px;
+
+      padding: 0;
+
+      border: 0;
+
+      background: transparent;
+
+      color: #6b7280;
+
+      border-radius: 8px;
+
+      cursor: pointer;
+
+      font-size: 16px;
+
+      transition: .2s;
+    }
+
+
+    .toggle:hover {
+      background: #fef2f2;
+
+      color: #dc2626;
+    }
+
+
+    /* =========================
+       LOGIN BUTTON
+    ========================= */
+
+    .login-btn {
+      width: 100%;
+
+      height: 50px;
+
+      margin-top: 5px;
+
+      border: 0;
+
+      border-radius: 12px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #dc2626,
+          #b91c1c
+        );
+
+      color: white;
+
+      font-size: 15px;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+      transition: .2s;
+
+      box-shadow:
+        0 8px 20px rgba(220,38,38,.25);
+    }
+
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+
+      box-shadow:
+        0 12px 25px rgba(220,38,38,.32);
+    }
+
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+
+    .login-btn:disabled {
+      opacity: .65;
+
+      cursor: not-allowed;
+
+      transform: none;
+    }
+
+
+    /* =========================
+       INFO
+    ========================= */
+
+    .security {
+      margin-top: 20px;
+
+      padding: 12px 14px;
+
+      border-radius: 12px;
+
+      background: #f9fafb;
+
+      border: 1px solid #f0f0f0;
+
+      text-align: center;
+
+      color: #6b7280;
+
+      font-size: 12px;
+    }
+
+
+    .security strong {
+      color: #374151;
+    }
+
+
+    /* =========================
+       FOOTER
+    ========================= */
+
+    .footer {
+      text-align: center;
+
+      margin-top: 17px;
+
+      color: rgba(255,255,255,.75);
+
+      font-size: 11px;
+    }
+
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 480px) {
+
+      body {
+        padding: 16px;
+      }
+
+      .card {
+        padding: 25px 20px;
+
+        border-radius: 20px;
+      }
+
+      .brand h1 {
+        font-size: 23px;
+      }
+
+      .brand p {
+        font-size: 12px;
+      }
+
+      .flag {
+        width: 60px;
+        height: 60px;
+
+        font-size: 32px;
+      }
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+  <main class="login-wrap">
+
+
+    <!-- BRAND -->
+    <div class="brand">
+
+      <div class="flag">
+        🇮🇩
+      </div>
+
+      <h1>
+        Kas 17 Agustus
+      </h1>
+
+      <p>
+        Sistem Administrasi Kas Kegiatan
+      </p>
+
+    </div>
+
+
+
+    <!-- LOGIN CARD -->
+    <section class="card">
+
+      <h2>
+        Selamat datang 👋
+      </h2>
+
+      <p class="subtitle">
+        Silakan masuk untuk mengelola
+        pemasukan dan pengeluaran kas.
+      </p>
+
+
+
+      <!-- ERROR -->
+      <div
+        id="error"
+        class="error">
+      </div>
+
+
+
+      <!-- USERNAME -->
+      <div class="field">
+
+        <label for="username">
+          Username
+        </label>
+
+        <input
+          id="username"
+          type="text"
+          placeholder="Masukkan username"
+          autocomplete="username">
+
+      </div>
+
+
+
+      <!-- PASSWORD -->
+      <div class="field">
+
+        <label for="password">
+          Password
+        </label>
+
+        <div class="input-wrap">
+
+          <input
+            id="password"
+            type="password"
+            placeholder="Masukkan password"
+            autocomplete="current-password"
+            onkeydown="
+              if(event.key === 'Enter'){
+                login();
+              }
+            ">
+
+          <button
+            class="toggle"
+            type="button"
+            onclick="togglePassword()"
+            aria-label="Tampilkan password">
+
+            👁️
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- LOGIN -->
+      <button
+        class="login-btn"
+        id="loginBtn"
+        type="button"
+        onclick="login()">
+
+        Masuk ke Dashboard →
+
+      </button>
+
+
+      <!-- SECURITY INFO -->
+      <div class="security">
+
+        🔒
+        <strong>
+          Akses terbatas
+        </strong>
+
+        <br>
+
+        Hanya admin dan bendahara
+        yang dapat mengakses sistem.
+
+      </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <div class="footer">
+
+      🇮🇩 © 17 Agustus • Sistem Kas Kegiatan
+
+    </div>
+
+
+  </main>
+
+
+  <!-- JAVASCRIPT -->
+  <script src="script.js"></script>
+
+</body>
+</html>
