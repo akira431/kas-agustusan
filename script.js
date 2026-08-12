@@ -1,4 +1,34 @@
-// ===== DATA USER (ROLE) =====
+// ======================================================
+// FIREBASE CONFIG
+// ======================================================
+
+// GANTI BAGIAN INI dengan firebaseConfig project kamu
+const firebaseConfig = {
+    apiKey: "AIzaSyAKzYZWI1pCfdZc3cRViR_ZNqiGb3hPnrk",
+    authDomain: "kas-agustusan.firebaseapp.com",
+    databaseURL: "https://kas-agustusan-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "kas-agustusan",
+    storageBucket: "kas-agustusan.firebasestorage.app",
+    messagingSenderId: "153182535190",
+    appId: "1:153182535190:web:2c7aa71890c2a323d77f37",
+    measurementId: "G-RYS2V5J9B1"
+  };
+
+
+
+// ======================================================
+// FIREBASE INITIALIZATION
+// ======================================================
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+
+// ======================================================
+// DATA USER
+// ======================================================
+
 const users = [
   {
     username: "admin",
@@ -13,18 +43,26 @@ const users = [
 ];
 
 
-// ===== FORMAT RUPIAH =====
+// ======================================================
+// FORMAT RUPIAH
+// ======================================================
+
 function rupiah(angka) {
+
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(Number(angka) || 0);
+
 }
 
 
-// ===== LOGIN =====
+// ======================================================
+// LOGIN
+// ======================================================
+
 function login() {
 
   const username =
@@ -68,14 +106,21 @@ function login() {
     alert("Username atau password salah! ❌");
 
   }
+
 }
 
 
-// ===== TAMPILKAN PASSWORD =====
+// ======================================================
+// TAMPILKAN PASSWORD
+// ======================================================
+
 function togglePassword() {
 
   const password =
     document.getElementById("password");
+
+
+  if (!password) return;
 
 
   if (password.type === "password") {
@@ -87,20 +132,28 @@ function togglePassword() {
     password.type = "password";
 
   }
+
 }
 
 
-// ===== LOGOUT =====
+// ======================================================
+// LOGOUT
+// ======================================================
+
 function logout() {
 
   localStorage.removeItem("user");
 
   window.location.href =
     "index.html";
+
 }
 
 
-// ===== CEK LOGIN =====
+// ======================================================
+// CEK LOGIN
+// ======================================================
+
 function cekLogin() {
 
   const user =
@@ -131,281 +184,324 @@ function cekLogin() {
 
 
   return user;
+
 }
 
 
-// ===== TAMBAH DATA =====
-function tambahData() {
+// ======================================================
+// TAMBAH DATA KE FIRESTORE
+// ======================================================
 
-  const tanggal =
-    document.getElementById("tanggal").value;
+async function tambahData() {
 
-  const nama =
-    document.getElementById("nama").value.trim();
+  try {
 
-  const jumlah =
-    parseInt(
-      document.getElementById("jumlah").value
-    );
+    const tanggal =
+      document.getElementById("tanggal").value;
 
-  const keterangan =
-    document
-      .getElementById("keterangan")
-      .value.trim();
-
-  const tipe =
-    document.getElementById("tipe").value;
-
-
-  // VALIDASI
-  if (!tanggal) {
-
-    alert("Tanggal wajib diisi!");
-
-    return;
-  }
-
-
-  if (!nama) {
-
-    alert("Nama wajib diisi!");
-
-    return;
-  }
-
-
-  if (!jumlah || jumlah <= 0) {
-
-    alert("Jumlah harus lebih dari 0!");
-
-    return;
-  }
-
-
-  // AMBIL DATA
-  let data =
-    JSON.parse(
-      localStorage.getItem("kas")
-    ) || [];
-
-
-  // TAMBAHKAN DATA
-  data.push({
-
-    tanggal: tanggal,
-
-    nama: nama,
-
-    jumlah: jumlah,
-
-    keterangan: keterangan,
-
-    tipe: tipe
-
-  });
-
-
-  // SIMPAN
-  localStorage.setItem(
-    "kas",
-    JSON.stringify(data)
-  );
-
-
-  alert("Data berhasil disimpan! ✅");
-
-
-  // RESET FORM
-  document.getElementById("nama").value = "";
-
-  document.getElementById("jumlah").value = "";
-
-  document.getElementById("keterangan").value = "";
-
-
-  // UPDATE
-  loadData();
-}
-
-
-// ===== LOAD DATA =====
-function loadData() {
-
-  let data =
-    JSON.parse(
-      localStorage.getItem("kas")
-    ) || [];
-
-
-  let html = "";
-
-  let saldo = 0;
-
-  let totalMasuk = 0;
-
-  let totalKeluar = 0;
-
-
-  data.forEach((d, index) => {
-
+    const nama =
+      document.getElementById("nama").value.trim();
 
     const jumlah =
-      Number(d.jumlah) || 0;
+      Number(
+        document.getElementById("jumlah").value
+      );
+
+    const keterangan =
+      document
+        .getElementById("keterangan")
+        .value.trim();
+
+    const tipe =
+      document.getElementById("tipe").value;
 
 
-    // HITUNG SALDO
-    if (d.tipe === "masuk") {
+    // VALIDASI
 
-      saldo += jumlah;
+    if (!tanggal) {
 
-      totalMasuk += jumlah;
+      alert("Tanggal wajib diisi!");
 
-    } else {
-
-      saldo -= jumlah;
-
-      totalKeluar += jumlah;
-
+      return;
     }
 
 
-    // TAMPILKAN DATA
-    html += `
+    if (!nama) {
 
-      <div class="item">
+      alert("Nama wajib diisi!");
 
-        <strong>
-          ${d.nama}
-        </strong>
-
-        <br>
-
-        <small>
-          ${d.tanggal}
-        </small>
-
-        <br>
+      return;
+    }
 
 
-        <span class="${d.tipe}">
+    if (!jumlah || jumlah <= 0) {
 
-          ${rupiah(jumlah)}
+      alert("Jumlah harus lebih dari 0!");
 
-          (${d.tipe})
-
-        </span>
-
-
-        <br>
+      return;
+    }
 
 
-        ${
-          d.keterangan
-            ? d.keterangan
-            : ""
+    // SIMPAN KE FIRESTORE
+
+    await db.collection("kas").add({
+
+      tanggal: tanggal,
+
+      nama: nama,
+
+      jumlah: jumlah,
+
+      keterangan: keterangan,
+
+      tipe: tipe,
+
+      createdAt:
+        firebase.firestore.FieldValue.serverTimestamp()
+
+    });
+
+
+    alert("Data berhasil disimpan! ✅");
+
+
+    // RESET FORM
+
+    document.getElementById("nama").value = "";
+
+    document.getElementById("jumlah").value = "";
+
+    document.getElementById("keterangan").value = "";
+
+
+  } catch (error) {
+
+    console.error(
+      "Gagal menyimpan data:",
+      error
+    );
+
+    alert(
+      "Gagal menyimpan data!\n\n" +
+      error.message
+    );
+
+  }
+
+}
+
+
+// ======================================================
+// LOAD DATA REALTIME DARI FIRESTORE
+// ======================================================
+
+function loadData() {
+
+  db.collection("kas")
+    .orderBy("tanggal", "desc")
+    .onSnapshot(
+
+      function(snapshot) {
+
+        let html = "";
+
+        let saldo = 0;
+
+        let totalMasuk = 0;
+
+        let totalKeluar = 0;
+
+
+        snapshot.forEach(function(doc) {
+
+          const d = doc.data();
+
+          const id = doc.id;
+
+          const jumlah =
+            Number(d.jumlah) || 0;
+
+
+          // HITUNG SALDO
+
+          if (d.tipe === "masuk") {
+
+            saldo += jumlah;
+
+            totalMasuk += jumlah;
+
+          } else {
+
+            saldo -= jumlah;
+
+            totalKeluar += jumlah;
+
+          }
+
+
+          // TAMPILKAN DATA
+
+          html += `
+
+            <div class="item">
+
+              <strong>
+                ${escapeHTML(d.nama)}
+              </strong>
+
+              <br>
+
+              <small>
+                ${escapeHTML(d.tanggal || "")}
+              </small>
+
+              <br>
+
+
+              <span class="${d.tipe}">
+
+                ${rupiah(jumlah)}
+
+                (${d.tipe === "masuk"
+                  ? "Pemasukan"
+                  : "Pengeluaran"})
+
+              </span>
+
+
+              <br>
+
+
+              ${
+                d.keterangan
+                  ? escapeHTML(d.keterangan)
+                  : ""
+              }
+
+
+              <br><br>
+
+
+              <button
+                class="edit"
+                onclick="bukaEdit('${id}')">
+
+                Edit
+
+              </button>
+
+
+              <button
+                class="hapus"
+                onclick="hapusData('${id}')">
+
+                Hapus
+
+              </button>
+
+
+            </div>
+
+          `;
+
+        });
+
+
+        // DATA TRANSAKSI
+
+        const dataElement =
+          document.getElementById("data");
+
+
+        if (dataElement) {
+
+          dataElement.innerHTML =
+            html;
+
         }
 
 
-        <br>
+        // TOTAL PEMASUKAN
+
+        const masukElement =
+          document.getElementById("totalMasuk");
 
 
-        <button
-          class="hapus"
-          onclick="hapusData(${index})">
+        if (masukElement) {
 
-          Hapus
+          masukElement.innerText =
+            rupiah(totalMasuk);
 
-        </button>
-
-      </div>
-
-    `;
-
-  });
+        }
 
 
-  // TAMPILKAN DATA TRANSAKSI
-  const dataElement =
-    document.getElementById("data");
+        // TOTAL PENGELUARAN
+
+        const keluarElement =
+          document.getElementById("totalKeluar");
 
 
-  if (dataElement) {
+        if (keluarElement) {
 
-    dataElement.innerHTML =
-      html;
+          keluarElement.innerText =
+            rupiah(totalKeluar);
 
-  }
-
-
-  // ===== TOTAL PEMASUKAN =====
-  const masukElement =
-    document.getElementById("totalMasuk");
+        }
 
 
-  if (masukElement) {
+        // SALDO
 
-    masukElement.innerText =
-      rupiah(totalMasuk);
-
-  }
+        const saldoElement =
+          document.getElementById("saldo");
 
 
-  // ===== TOTAL PENGELUARAN =====
-  const keluarElement =
-    document.getElementById("totalKeluar");
+        if (saldoElement) {
+
+          saldoElement.innerText =
+            rupiah(saldo);
 
 
-  if (keluarElement) {
+          if (saldo < 0) {
 
-    keluarElement.innerText =
-      rupiah(totalKeluar);
+            saldoElement.style.color =
+              "#dc2626";
 
-  }
+          } else {
+
+            saldoElement.style.color =
+              "#2563eb";
+
+          }
+
+        }
+
+      },
+
+      function(error) {
+
+        console.error(
+          "Firestore error:",
+          error
+        );
 
 
-  // ===== SALDO =====
-  const saldoElement =
-    document.getElementById("saldo");
+        alert(
+          "Gagal mengambil data Firestore:\n\n" +
+          error.message
+        );
 
+      }
 
-  if (saldoElement) {
-
-    saldoElement.innerText =
-      rupiah(saldo);
-
-
-    // Kalau saldo minus → merah
-    if (saldo < 0) {
-
-      saldoElement.style.color =
-        "#dc2626";
-
-    } else {
-
-      saldoElement.style.color =
-        "#2563eb";
-
-    }
-
-  }
+    );
 
 }
 
 
-// ===== HAPUS DATA =====
-function hapusData(index) {
+// ======================================================
+// HAPUS DATA
+// ======================================================
 
-  let data =
-    JSON.parse(
-      localStorage.getItem("kas")
-    ) || [];
-
-
-  if (!data[index]) {
-
-    return;
-  }
-
+async function hapusData(id) {
 
   const yakin =
     confirm(
@@ -416,226 +512,205 @@ function hapusData(index) {
   if (!yakin) {
 
     return;
-  }
-
-
-  data.splice(index, 1);
-
-
-  localStorage.setItem(
-    "kas",
-    JSON.stringify(data)
-  );
-
-
-  loadData();
-
-}
-
-
-// ===== EDIT DATA =====
-function bukaEdit(index) {
-
-  let data =
-    JSON.parse(
-      localStorage.getItem("kas")
-    ) || [];
-
-
-  const d =
-    data[index];
-
-
-  if (!d) {
-
-    return;
-  }
-
-
-  const editIndex =
-    document.getElementById("editIndex");
-
-  const editTanggal =
-    document.getElementById("editTanggal");
-
-  const editNama =
-    document.getElementById("editNama");
-
-  const editJumlah =
-    document.getElementById("editJumlah");
-
-  const editKeterangan =
-    document.getElementById("editKeterangan");
-
-  const editTipe =
-    document.getElementById("editTipe");
-
-
-  if (editIndex) {
-
-    editIndex.value =
-      index;
 
   }
 
 
-  if (editTanggal) {
+  try {
 
-    editTanggal.value =
-      d.tanggal;
-
-  }
-
-
-  if (editNama) {
-
-    editNama.value =
-      d.nama;
-
-  }
+    await db
+      .collection("kas")
+      .doc(id)
+      .delete();
 
 
-  if (editJumlah) {
+  } catch (error) {
 
-    editJumlah.value =
-      d.jumlah;
+    console.error(error);
 
-  }
-
-
-  if (editKeterangan) {
-
-    editKeterangan.value =
-      d.keterangan || "";
-
-  }
-
-
-  if (editTipe) {
-
-    editTipe.value =
-      d.tipe;
-
-  }
-
-
-  const modal =
-    document.getElementById("editModal");
-
-
-  if (modal) {
-
-    modal.style.display =
-      "flex";
+    alert(
+      "Gagal menghapus data!\n\n" +
+      error.message
+    );
 
   }
 
 }
 
 
-// ===== TUTUP EDIT =====
-function closeEdit() {
+// ======================================================
+// EDIT DATA
+// ======================================================
 
-  const modal =
-    document.getElementById("editModal");
+async function bukaEdit(id) {
 
+  try {
 
-  if (modal) {
-
-    modal.style.display =
-      "none";
-
-  }
-
-}
+    const doc =
+      await db
+        .collection("kas")
+        .doc(id)
+        .get();
 
 
-// ===== SIMPAN EDIT =====
-function simpanEdit() {
+    if (!doc.exists) {
 
-  const index =
-    Number(
-      document.getElementById("editIndex").value
+      alert("Data tidak ditemukan!");
+
+      return;
+
+    }
+
+
+    const d =
+      doc.data();
+
+
+    const tanggal =
+      prompt(
+        "Tanggal:",
+        d.tanggal || ""
+      );
+
+
+    if (tanggal === null) return;
+
+
+    const nama =
+      prompt(
+        "Nama:",
+        d.nama || ""
+      );
+
+
+    if (nama === null) return;
+
+
+    const jumlah =
+      prompt(
+        "Jumlah:",
+        d.jumlah || 0
+      );
+
+
+    if (jumlah === null) return;
+
+
+    const tipe =
+      prompt(
+        "Tipe (masuk/keluar):",
+        d.tipe || "masuk"
+      );
+
+
+    if (tipe === null) return;
+
+
+    const keterangan =
+      prompt(
+        "Keterangan:",
+        d.keterangan || ""
+      );
+
+
+    if (keterangan === null) return;
+
+
+    const jumlahAngka =
+      Number(jumlah);
+
+
+    if (
+      !jumlahAngka ||
+      jumlahAngka <= 0
+    ) {
+
+      alert(
+        "Jumlah tidak valid!"
+      );
+
+      return;
+
+    }
+
+
+    if (
+      tipe !== "masuk" &&
+      tipe !== "keluar"
+    ) {
+
+      alert(
+        "Tipe harus 'masuk' atau 'keluar'!"
+      );
+
+      return;
+
+    }
+
+
+    await db
+      .collection("kas")
+      .doc(id)
+      .update({
+
+        tanggal: tanggal,
+
+        nama: nama.trim(),
+
+        jumlah: jumlahAngka,
+
+        tipe: tipe,
+
+        keterangan: keterangan.trim(),
+
+        updatedAt:
+          firebase.firestore.FieldValue.serverTimestamp()
+
+      });
+
+
+    alert(
+      "Data berhasil diperbarui! ✅"
     );
 
 
-  let data =
-    JSON.parse(
-      localStorage.getItem("kas")
-    ) || [];
+  } catch (error) {
 
+    console.error(error);
 
-  if (!data[index]) {
-
-    return;
-  }
-
-
-  const tanggal =
-    document
-      .getElementById("editTanggal")
-      .value;
-
-  const nama =
-    document
-      .getElementById("editNama")
-      .value.trim();
-
-  const jumlah =
-    Number(
-      document
-        .getElementById("editJumlah")
-        .value
+    alert(
+      "Gagal mengedit data!\n\n" +
+      error.message
     );
 
-  const keterangan =
-    document
-      .getElementById("editKeterangan")
-      .value.trim();
-
-  const tipe =
-    document
-      .getElementById("editTipe")
-      .value;
-
-
-  if (!tanggal || !nama || !jumlah) {
-
-    alert("Data belum lengkap!");
-
-    return;
   }
-
-
-  data[index] = {
-
-    tanggal: tanggal,
-
-    nama: nama,
-
-    jumlah: jumlah,
-
-    keterangan: keterangan,
-
-    tipe: tipe
-
-  };
-
-
-  localStorage.setItem(
-    "kas",
-    JSON.stringify(data)
-  );
-
-
-  closeEdit();
-
-  loadData();
 
 }
 
 
-// ===== AUTO JALAN DI DASHBOARD =====
+// ======================================================
+// ESCAPE HTML
+// ======================================================
+
+function escapeHTML(text) {
+
+  const div =
+    document.createElement("div");
+
+  div.textContent =
+    text == null
+      ? ""
+      : String(text);
+
+  return div.innerHTML;
+
+}
+
+
+// ======================================================
+// AUTO JALAN DI DASHBOARD
+// ======================================================
+
 if (
   window.location.pathname.includes(
     "dashboard_baru.html"
