@@ -1,5 +1,5 @@
 // ======================================================
-// FIREBASE FIRESTORE
+// FIREBASE CONFIG
 // ======================================================
 
 const firebaseConfig = {
@@ -14,68 +14,17 @@ const firebaseConfig = {
 };
 
 
-// Jalankan Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Koneksi Firestore
-const db = firebase.firestore();
-
-
 // ======================================================
-// DATA USER
+// JALANKAN FIREBASE
 // ======================================================
 
-async function login() {
-
-  const usernameElement = document.getElementById("username");
-  const passwordElement = document.getElementById("password");
-
-  if (!usernameElement || !passwordElement) {
-    return;
-  }
-
-  const email = usernameElement.value.trim();
-  const password = passwordElement.value;
-
-  if (!email || !password) {
-    alert("Email dan password wajib diisi!");
-    return;
-  }
-
-  try {
-
-    const userCredential =
-      await firebase.auth().signInWithEmailAndPassword(
-        email,
-        password
-      );
-
-    const user = userCredential.user;
-
-    console.log("Login berhasil:", user.email);
-
-    window.location.href = "dashboard_baru.html";
-
-  } catch (error) {
-
-    console.error("LOGIN ERROR:", error);
-
-    if (error.code === "auth/invalid-credential") {
-      alert("Email atau password salah!");
-    }
-    else if (error.code === "auth/user-not-found") {
-      alert("Akun tidak ditemukan!");
-    }
-    else if (error.code === "auth/wrong-password") {
-      alert("Password salah!");
-    }
-    else {
-      alert("Login gagal!\n\n" + error.message);
-    }
-
-  }
-
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
 }
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+
 
 // ======================================================
 // FORMAT RUPIAH
@@ -94,10 +43,12 @@ function rupiah(angka) {
 
 
 // ======================================================
-// LOGIN
+// LOGIN FIREBASE
 // ======================================================
 
-function login() {
+async function login() {
+
+  console.log("LOGIN DIKLIK");
 
   const usernameElement =
     document.getElementById("username");
@@ -108,45 +59,44 @@ function login() {
 
   if (!usernameElement || !passwordElement) {
 
+    alert("Input email atau password tidak ditemukan!");
+
     return;
 
   }
 
 
-  const username =
+  const email =
     usernameElement.value.trim();
 
   const password =
     passwordElement.value;
 
 
-  if (!username || !password) {
+  if (!email || !password) {
 
-    alert("Username dan password wajib diisi!");
+    alert("Email dan password wajib diisi!");
 
     return;
 
   }
 
 
-  const user = users.find(
-    function (u) {
+  try {
 
-      return (
-        u.username === username &&
-        u.password === password
+    console.log("Mencoba login:", email);
+
+
+    const userCredential =
+      await auth.signInWithEmailAndPassword(
+        email,
+        password
       );
 
-    }
-  );
 
-
-  if (user) {
-
-    // Login hanya untuk mengingat sesi perangkat
-    localStorage.setItem(
-      "user",
-      JSON.stringify(user)
+    console.log(
+      "LOGIN BERHASIL:",
+      userCredential.user.email
     );
 
 
@@ -157,11 +107,57 @@ function login() {
       "dashboard_baru.html";
 
 
-  } else {
+  } catch (error) {
 
-    alert(
-      "Username atau password salah! ❌"
+    console.error(
+      "LOGIN ERROR:",
+      error
     );
+
+
+    if (
+      error.code ===
+      "auth/invalid-credential"
+    ) {
+
+      alert(
+        "Email atau password salah!"
+      );
+
+    }
+
+    else if (
+      error.code ===
+      "auth/user-not-found"
+    ) {
+
+      alert(
+        "Akun tidak ditemukan!"
+      );
+
+    }
+
+    else if (
+      error.code ===
+      "auth/wrong-password"
+    ) {
+
+      alert(
+        "Password salah!"
+      );
+
+    }
+
+    else {
+
+      alert(
+        "Login gagal!\n\n" +
+        error.code +
+        "\n" +
+        error.message
+      );
+
+    }
 
   }
 
@@ -185,11 +181,16 @@ function togglePassword() {
   }
 
 
-  if (password.type === "password") {
+  if (
+    password.type ===
+    "password"
+  ) {
 
     password.type = "text";
 
-  } else {
+  }
+
+  else {
 
     password.type = "password";
 
@@ -204,19 +205,26 @@ function togglePassword() {
 
 function logout() {
 
-  firebase.auth().signOut()
+  auth.signOut()
+
     .then(function () {
 
-      window.location.href = "index.html";
+      window.location.href =
+        "index.html";
 
     })
+
     .catch(function (error) {
 
-      console.error("LOGOUT ERROR:", error);
+      console.error(
+        "LOGOUT ERROR:",
+        error
+      );
 
     });
 
 }
+
 
 // ======================================================
 // CEK LOGIN
@@ -224,40 +232,42 @@ function logout() {
 
 function cekLogin() {
 
-  firebase.auth().onAuthStateChanged(function(user) {
+  auth.onAuthStateChanged(
+    function (user) {
 
-    if (!user) {
+      if (!user) {
 
-      window.location.href = "index.html";
-      return;
+        window.location.href =
+          "index.html";
+
+        return;
+
+      }
+
+
+      console.log(
+        "User login:",
+        user.email
+      );
+
+
+      const roleElement =
+        document.getElementById("role");
+
+
+      if (roleElement) {
+
+        roleElement.innerText =
+          "Login sebagai: " +
+          user.email;
+
+      }
+
+
+      loadData();
 
     }
-
-    console.log("User login:", user.email);
-
-    const roleElement =
-      document.getElementById("role");
-
-    if (roleElement) {
-
-      roleElement.innerText =
-        "Login sebagai: " + user.email;
-
-    }
-
-    loadData();
-
-  });
-
-}
-
-if (
-  window.location.pathname.includes(
-    "dashboard_baru.html"
-  )
-) {
-
-  cekLogin();
+  );
 
 }
 
@@ -324,7 +334,9 @@ async function tambahData() {
 
     if (!tanggal) {
 
-      alert("Tanggal wajib diisi!");
+      alert(
+        "Tanggal wajib diisi!"
+      );
 
       return;
 
@@ -333,7 +345,9 @@ async function tambahData() {
 
     if (!nama) {
 
-      alert("Nama wajib diisi!");
+      alert(
+        "Nama wajib diisi!"
+      );
 
       return;
 
@@ -346,7 +360,9 @@ async function tambahData() {
       !Number.isFinite(jumlah)
     ) {
 
-      alert("Jumlah harus lebih dari 0!");
+      alert(
+        "Jumlah harus lebih dari 0!"
+      );
 
       return;
 
@@ -366,34 +382,57 @@ async function tambahData() {
 
     }
 
- // SIMPAN KE FIRESTORE
 
-await db.collection("kas").add({
+    // CEK USER FIREBASE
 
-  tanggal: tanggal,
-
-  nama: nama,
-
-  jumlah: jumlah,
-
-  keterangan: keterangan,
-
-  tipe: tipe,
-
-  createdAt:
-    firebase.firestore.FieldValue.serverTimestamp(),
-
-  createdBy:
-    firebase.auth().currentUser
-      ? firebase.auth().currentUser.email
-      : "unknown"
-
-});
+    const currentUser =
+      auth.currentUser;
 
 
-alert(
-  "Data berhasil disimpan ke database! ✅"
-);
+    if (!currentUser) {
+
+      alert(
+        "Sesi login sudah berakhir. Silakan login kembali."
+      );
+
+      window.location.href =
+        "index.html";
+
+      return;
+
+    }
+
+
+    // ==================================================
+    // SIMPAN KE FIRESTORE
+    // ==================================================
+
+    await db
+      .collection("kas")
+      .add({
+
+        tanggal: tanggal,
+
+        nama: nama,
+
+        jumlah: jumlah,
+
+        keterangan: keterangan,
+
+        tipe: tipe,
+
+        createdAt:
+          firebase.firestore.FieldValue.serverTimestamp(),
+
+        createdBy:
+          currentUser.email
+
+      });
+
+
+    alert(
+      "Data berhasil disimpan ke database! ✅"
+    );
 
 
     // RESET FORM
@@ -409,12 +448,9 @@ alert(
     }
 
 
-    // Tidak perlu loadData()
-    // karena onSnapshot() akan otomatis
-    // memperbarui tampilan.
+  }
 
-
-  } catch (error) {
+  catch (error) {
 
     console.error(
       "ERROR TAMBAH DATA:",
@@ -433,48 +469,13 @@ alert(
 
 
 // ======================================================
-// AMBIL USER YANG SEDANG LOGIN
-// ======================================================
-
-function getCurrentUserUsername() {
-
-  try {
-
-    const user =
-      JSON.parse(
-        localStorage.getItem("user")
-      );
-
-
-    if (user && user.username) {
-
-      return user.username;
-
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-  }
-
-
-  return "unknown";
-
-}
-
-
-// ======================================================
-// LOAD DATA REALTIME DARI FIRESTORE
+// LOAD DATA REALTIME
 // ======================================================
 
 let unsubscribeKas = null;
 
 
 function loadData() {
-
-  // Kalau listener sebelumnya masih ada,
-  // hentikan terlebih dahulu.
 
   if (unsubscribeKas) {
 
@@ -486,8 +487,12 @@ function loadData() {
 
 
   unsubscribeKas =
-    db.collection("kas")
-      .orderBy("tanggal", "desc")
+    db
+      .collection("kas")
+      .orderBy(
+        "tanggal",
+        "desc"
+      )
       .onSnapshot(
 
         function (snapshot) {
@@ -500,10 +505,6 @@ function loadData() {
 
           let totalKeluar = 0;
 
-
-          // ==========================================
-          // LOOP DATA FIRESTORE
-          // ==========================================
 
           snapshot.forEach(
             function (doc) {
@@ -521,13 +522,17 @@ function loadData() {
 
               // HITUNG SALDO
 
-              if (d.tipe === "masuk") {
+              if (
+                d.tipe === "masuk"
+              ) {
 
                 saldo += jumlah;
 
                 totalMasuk += jumlah;
 
-              } else {
+              }
+
+              else {
 
                 saldo -= jumlah;
 
@@ -536,22 +541,24 @@ function loadData() {
               }
 
 
-              // ========================================
               // TAMPILKAN DATA
-              // ========================================
 
               html += `
 
                 <div class="item">
 
                   <strong>
-                    ${escapeHTML(d.nama || "-")}
+                    ${escapeHTML(
+                      d.nama || "-"
+                    )}
                   </strong>
 
                   <br>
 
                   <small>
-                    ${escapeHTML(d.tanggal || "-")}
+                    ${escapeHTML(
+                      d.tanggal || "-"
+                    )}
                   </small>
 
                   <br>
@@ -572,8 +579,11 @@ function loadData() {
                     d.keterangan
                       ? `
                         <br>
+
                         <small>
-                          ${escapeHTML(d.keterangan)}
+                          ${escapeHTML(
+                            d.keterangan
+                          )}
                         </small>
                       `
                       : ""
@@ -605,9 +615,7 @@ function loadData() {
           );
 
 
-          // ==========================================
-          // TAMPILKAN LIST DATA
-          // ==========================================
+          // TAMPILKAN DATA
 
           const dataElement =
             document.getElementById("data");
@@ -627,7 +635,9 @@ function loadData() {
 
               `;
 
-            } else {
+            }
+
+            else {
 
               dataElement.innerHTML =
                 html;
@@ -637,12 +647,12 @@ function loadData() {
           }
 
 
-          // ==========================================
           // TOTAL PEMASUKAN
-          // ==========================================
 
           const masukElement =
-            document.getElementById("totalMasuk");
+            document.getElementById(
+              "totalMasuk"
+            );
 
 
           if (masukElement) {
@@ -653,12 +663,12 @@ function loadData() {
           }
 
 
-          // ==========================================
           // TOTAL PENGELUARAN
-          // ==========================================
 
           const keluarElement =
-            document.getElementById("totalKeluar");
+            document.getElementById(
+              "totalKeluar"
+            );
 
 
           if (keluarElement) {
@@ -669,12 +679,12 @@ function loadData() {
           }
 
 
-          // ==========================================
           // SALDO
-          // ==========================================
 
           const saldoElement =
-            document.getElementById("saldo");
+            document.getElementById(
+              "saldo"
+            );
 
 
           if (saldoElement) {
@@ -688,7 +698,9 @@ function loadData() {
               saldoElement.style.color =
                 "#dc2626";
 
-            } else {
+            }
+
+            else {
 
               saldoElement.style.color =
                 "#2563eb";
@@ -721,7 +733,7 @@ function loadData() {
 
 
 // ======================================================
-// HAPUS DATA FIRESTORE
+// HAPUS DATA
 // ======================================================
 
 async function hapusData(id) {
@@ -751,8 +763,9 @@ async function hapusData(id) {
       "Data berhasil dihapus! ✅"
     );
 
+  }
 
-  } catch (error) {
+  catch (error) {
 
     console.error(
       "ERROR HAPUS:",
@@ -771,7 +784,7 @@ async function hapusData(id) {
 
 
 // ======================================================
-// EDIT DATA FIRESTORE
+// EDIT DATA
 // ======================================================
 
 async function bukaEdit(id) {
@@ -800,10 +813,6 @@ async function bukaEdit(id) {
       doc.data();
 
 
-    // ================================================
-    // TANGGAL
-    // ================================================
-
     const tanggal =
       prompt(
         "Tanggal:",
@@ -817,10 +826,6 @@ async function bukaEdit(id) {
 
     }
 
-
-    // ================================================
-    // NAMA
-    // ================================================
 
     const nama =
       prompt(
@@ -836,10 +841,6 @@ async function bukaEdit(id) {
     }
 
 
-    // ================================================
-    // JUMLAH
-    // ================================================
-
     const jumlah =
       prompt(
         "Jumlah:",
@@ -854,10 +855,6 @@ async function bukaEdit(id) {
     }
 
 
-    // ================================================
-    // TIPE
-    // ================================================
-
     const tipe =
       prompt(
         "Tipe (masuk/keluar):",
@@ -871,10 +868,6 @@ async function bukaEdit(id) {
 
     }
 
-
-    // ================================================
-    // KETERANGAN
-    // ================================================
 
     const keterangan =
       prompt(
@@ -923,9 +916,23 @@ async function bukaEdit(id) {
     }
 
 
-    // ================================================
-    // UPDATE FIRESTORE
-    // ================================================
+    const currentUser =
+      auth.currentUser;
+
+
+    if (!currentUser) {
+
+      alert(
+        "Sesi login sudah berakhir."
+      );
+
+      window.location.href =
+        "index.html";
+
+      return;
+
+    }
+
 
     await db
       .collection("kas")
@@ -947,7 +954,7 @@ async function bukaEdit(id) {
           firebase.firestore.FieldValue.serverTimestamp(),
 
         updatedBy:
-          getCurrentUserUsername()
+          currentUser.email
 
       });
 
@@ -956,8 +963,9 @@ async function bukaEdit(id) {
       "Data berhasil diperbarui! ✅"
     );
 
+  }
 
-  } catch (error) {
+  catch (error) {
 
     console.error(
       "ERROR EDIT:",
@@ -982,7 +990,9 @@ async function bukaEdit(id) {
 function escapeHTML(text) {
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   div.textContent =
@@ -997,7 +1007,7 @@ function escapeHTML(text) {
 
 
 // ======================================================
-// AUTO JALAN DI DASHBOARD
+// JALANKAN CEK LOGIN HANYA DI DASHBOARD
 // ======================================================
 
 if (
@@ -1006,14 +1016,6 @@ if (
   )
 ) {
 
-  const user =
-    cekLogin();
-
-
-  if (user) {
-
-    loadData();
-
-  }
+  cekLogin();
 
 }
