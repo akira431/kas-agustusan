@@ -25,19 +25,57 @@ const db = firebase.firestore();
 // DATA USER
 // ======================================================
 
-const users = [
-  {
-    username: "admin",
-    password: "123",
-    role: "admin"
-  },
-  {
-    username: "bendahara",
-    password: "123",
-    role: "bendahara"
-  }
-];
+async function login() {
 
+  const usernameElement = document.getElementById("username");
+  const passwordElement = document.getElementById("password");
+
+  if (!usernameElement || !passwordElement) {
+    return;
+  }
+
+  const email = usernameElement.value.trim();
+  const password = passwordElement.value;
+
+  if (!email || !password) {
+    alert("Email dan password wajib diisi!");
+    return;
+  }
+
+  try {
+
+    const userCredential =
+      await firebase.auth().signInWithEmailAndPassword(
+        email,
+        password
+      );
+
+    const user = userCredential.user;
+
+    console.log("Login berhasil:", user.email);
+
+    window.location.href = "dashboard_baru.html";
+
+  } catch (error) {
+
+    console.error("LOGIN ERROR:", error);
+
+    if (error.code === "auth/invalid-credential") {
+      alert("Email atau password salah!");
+    }
+    else if (error.code === "auth/user-not-found") {
+      alert("Akun tidak ditemukan!");
+    }
+    else if (error.code === "auth/wrong-password") {
+      alert("Password salah!");
+    }
+    else {
+      alert("Login gagal!\n\n" + error.message);
+    }
+
+  }
+
+}
 
 // ======================================================
 // FORMAT RUPIAH
@@ -166,13 +204,19 @@ function togglePassword() {
 
 function logout() {
 
-  localStorage.removeItem("user");
+  firebase.auth().signOut()
+    .then(function () {
 
-  window.location.href =
-    "index.html";
+      window.location.href = "index.html";
+
+    })
+    .catch(function (error) {
+
+      console.error("LOGOUT ERROR:", error);
+
+    });
 
 }
-
 
 // ======================================================
 // CEK LOGIN
@@ -180,35 +224,40 @@ function logout() {
 
 function cekLogin() {
 
-  const user =
-    JSON.parse(
-      localStorage.getItem("user")
-    );
+  firebase.auth().onAuthStateChanged(function(user) {
 
+    if (!user) {
 
-  if (!user) {
+      window.location.href = "index.html";
+      return;
 
-    window.location.href =
-      "index.html";
+    }
 
-    return null;
+    console.log("User login:", user.email);
 
-  }
+    const roleElement =
+      document.getElementById("role");
 
+    if (roleElement) {
 
-  const roleElement =
-    document.getElementById("role");
+      roleElement.innerText =
+        "Login sebagai: " + user.email;
 
+    }
 
-  if (roleElement) {
+    loadData();
 
-    roleElement.innerText =
-      "Login sebagai: " + user.role;
+  });
 
-  }
+}
 
+if (
+  window.location.pathname.includes(
+    "dashboard_baru.html"
+  )
+) {
 
-  return user;
+  cekLogin();
 
 }
 
