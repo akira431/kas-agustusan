@@ -149,7 +149,7 @@ function login() {
 
     // Pindah dashboard
     window.location.href =
-      "dashboard.html";
+      "dashboard_baru.html";
 
   })
 
