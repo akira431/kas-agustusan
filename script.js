@@ -27,22 +27,121 @@ const db = firebase.firestore();
 
 
 // ======================================================
-// 🛠️ HELPER RUPIAH
+// 💰 FORMAT RUPIAH
 // ======================================================
 
 function rupiah(angka) {
-
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0
   }).format(Number(angka || 0));
-
 }
 
 
 // ======================================================
-// 🔐 CEK LOGIN
+// 🔐 LOGIN
+// ======================================================
+
+function login() {
+
+  const emailElement = document.getElementById("email");
+  const passwordElement = document.getElementById("password");
+
+  if (!emailElement || !passwordElement) {
+    console.error("Input email/password tidak ditemukan.");
+    return;
+  }
+
+  const email = emailElement.value.trim();
+  const password = passwordElement.value;
+
+  if (!email || !password) {
+    alert("Email dan password wajib diisi.");
+    return;
+  }
+
+  const button =
+    document.querySelector('button[type="submit"]') ||
+    document.querySelector(".login-btn") ||
+    document.querySelector(".btn-login");
+
+  if (button) {
+    button.disabled = true;
+    button.dataset.originalText = button.innerText;
+    button.innerText = "Memproses...";
+  }
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then(() => {
+
+      window.location.href = "dashboard.html";
+
+    })
+    .catch((error) => {
+
+      console.error("LOGIN ERROR:", error);
+
+      let pesan = "Login gagal.";
+
+      if (error.code === "auth/user-not-found") {
+        pesan = "Email belum terdaftar.";
+      }
+
+      else if (error.code === "auth/wrong-password") {
+        pesan = "Password salah.";
+      }
+
+      else if (error.code === "auth/invalid-email") {
+        pesan = "Format email tidak valid.";
+      }
+
+      else if (error.code === "auth/invalid-credential") {
+        pesan = "Email atau password salah.";
+      }
+
+      else if (error.code === "auth/too-many-requests") {
+        pesan = "Terlalu banyak percobaan login. Coba lagi nanti.";
+      }
+
+      alert("❌ " + pesan);
+
+      if (button) {
+        button.disabled = false;
+        button.innerText =
+          button.dataset.originalText || "Login";
+      }
+
+    });
+}
+
+
+// ======================================================
+// 🔐 SUPPORT FORM LOGIN
+// ======================================================
+
+document.addEventListener("DOMContentLoaded", function() {
+
+  const loginForm =
+    document.getElementById("loginForm");
+
+  if (loginForm) {
+
+    loginForm.addEventListener("submit", function(event) {
+
+      event.preventDefault();
+
+      login();
+
+    });
+
+  }
+
+});
+
+
+// ======================================================
+// 🔐 DASHBOARD AUTH
 // ======================================================
 
 function initDashboard() {
@@ -56,9 +155,8 @@ function initDashboard() {
       return;
     }
 
-
-    // Tampilkan email user
-    const roleElement = document.getElementById("role");
+    const roleElement =
+      document.getElementById("role");
 
     if (roleElement) {
 
@@ -67,8 +165,6 @@ function initDashboard() {
 
     }
 
-
-    // Load data
     loadData();
 
   });
@@ -90,7 +186,7 @@ function logout() {
     })
     .catch(function(error) {
 
-      console.error(error);
+      console.error("LOGOUT ERROR:", error);
 
       alert("Gagal keluar.");
 
@@ -100,7 +196,7 @@ function logout() {
 
 
 // ======================================================
-// ➕ TAMBAH DATA
+// ➕ TAMBAH TRANSAKSI
 // ======================================================
 
 async function tambahData() {
@@ -129,7 +225,6 @@ async function tambahData() {
 
   }
 
-
   if (!nama) {
 
     alert("Silakan isi nama / sumber.");
@@ -137,7 +232,6 @@ async function tambahData() {
     return;
 
   }
-
 
   if (!jumlah || jumlah <= 0) {
 
@@ -162,7 +256,8 @@ async function tambahData() {
 
       tipe: tipe,
 
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      createdAt:
+        firebase.firestore.FieldValue.serverTimestamp()
 
     });
 
@@ -170,23 +265,20 @@ async function tambahData() {
     alert("✅ Transaksi berhasil disimpan.");
 
 
-    // Reset form
     document.getElementById("tanggal").value = "";
     document.getElementById("nama").value = "";
     document.getElementById("jumlah").value = "";
     document.getElementById("keterangan").value = "";
-
     document.getElementById("tipe").value = "masuk";
 
 
-    // Refresh
     loadData();
 
   }
 
   catch (error) {
 
-    console.error("Gagal menyimpan:", error);
+    console.error("SIMPAN ERROR:", error);
 
     alert(
       "❌ Data gagal disimpan.\n\n" +
@@ -207,14 +299,14 @@ async function loadData() {
   const container =
     document.getElementById("data");
 
+  if (!container) return;
+
+
   const searchInput =
     document.getElementById("search");
 
   const filterInput =
     document.getElementById("filter");
-
-
-  if (!container) return;
 
 
   const search =
@@ -240,9 +332,7 @@ async function loadData() {
 
 
     let totalMasuk = 0;
-
     let totalKeluar = 0;
-
     let jumlahTampil = 0;
 
     let html = "";
@@ -265,19 +355,19 @@ async function loadData() {
         Number(d.jumlah || 0);
 
 
-      // Hitung total seluruh data
       if (tipe === "masuk") {
 
         totalMasuk += jumlah;
 
-      } else {
+      }
+
+      else {
 
         totalKeluar += jumlah;
 
       }
 
 
-      // Filter tipe
       if (
         filter !== "semua" &&
         tipe !== filter
@@ -288,14 +378,13 @@ async function loadData() {
       }
 
 
-      // Search
       const teks =
         (
           nama +
           " " +
           keterangan +
           " " +
-          d.tanggal
+          (d.tanggal || "")
         ).toLowerCase();
 
 
@@ -407,25 +496,52 @@ async function loadData() {
     container.innerHTML = html;
 
 
-    // Statistik
-    document.getElementById("totalMasuk").textContent =
-      rupiah(totalMasuk);
+    const totalMasukElement =
+      document.getElementById("totalMasuk");
 
-    document.getElementById("totalKeluar").textContent =
-      rupiah(totalKeluar);
+    const totalKeluarElement =
+      document.getElementById("totalKeluar");
 
-    document.getElementById("saldo").textContent =
-      rupiah(totalMasuk - totalKeluar);
+    const saldoElement =
+      document.getElementById("saldo");
+
+    const jumlahDataElement =
+      document.getElementById("jumlahData");
 
 
-    document.getElementById("jumlahData").textContent =
-      jumlahTampil + " transaksi";
+    if (totalMasukElement) {
+
+      totalMasukElement.textContent =
+        rupiah(totalMasuk);
+
+    }
+
+    if (totalKeluarElement) {
+
+      totalKeluarElement.textContent =
+        rupiah(totalKeluar);
+
+    }
+
+    if (saldoElement) {
+
+      saldoElement.textContent =
+        rupiah(totalMasuk - totalKeluar);
+
+    }
+
+    if (jumlahDataElement) {
+
+      jumlahDataElement.textContent =
+        jumlahTampil + " transaksi";
+
+    }
 
   }
 
   catch (error) {
 
-    console.error("Gagal mengambil data:", error);
+    console.error("LOAD DATA ERROR:", error);
 
 
     container.innerHTML = `
@@ -493,7 +609,7 @@ async function editData(id) {
 
   catch (error) {
 
-    console.error(error);
+    console.error("EDIT ERROR:", error);
 
     alert("Gagal membuka data.");
 
@@ -557,7 +673,6 @@ async function simpanEdit() {
 
     alert("✅ Data berhasil diperbarui.");
 
-
     closeEdit();
 
     loadData();
@@ -566,7 +681,7 @@ async function simpanEdit() {
 
   catch (error) {
 
-    console.error(error);
+    console.error("UPDATE ERROR:", error);
 
     alert(
       "❌ Gagal memperbarui data.\n\n" +
@@ -608,7 +723,7 @@ async function hapusData(id) {
 
   catch (error) {
 
-    console.error(error);
+    console.error("DELETE ERROR:", error);
 
     alert(
       "❌ Gagal menghapus data.\n\n" +
@@ -626,58 +741,67 @@ async function hapusData(id) {
 
 function closeEdit() {
 
-  document.getElementById("editModal").style.display =
-    "none";
+  const modal =
+    document.getElementById("editModal");
+
+  if (modal) {
+
+    modal.style.display = "none";
+
+  }
 
 }
 
 
 // ======================================================
-// 📊 EXPORT EXCEL - VERSI AMAN
+// 📊 EXPORT EXCEL
 // ======================================================
 
 async function exportExcel() {
 
   try {
 
-    // Cek library XLSX
     if (typeof XLSX === "undefined") {
 
-      alert("❌ Library Excel belum dimuat.");
+      alert(
+        "❌ Library Excel belum dimuat.\n" +
+        "Pastikan internet aktif."
+      );
 
       return;
+
     }
 
 
-    // Ambil data Firestore
-    const snapshot = await db.collection("kas")
-      .orderBy("tanggal", "asc")
-      .get();
+    const snapshot =
+      await db.collection("kas")
+        .orderBy("tanggal", "asc")
+        .get();
 
 
     if (snapshot.empty) {
 
-      alert("📭 Belum ada data kas untuk diekspor.");
+      alert(
+        "📭 Belum ada data kas untuk diekspor."
+      );
 
       return;
+
     }
 
 
-    // ==================================================
-    // SIAPKAN DATA
-    // ==================================================
-
-    const data = [];
+    const rows = [];
 
     let totalMasuk = 0;
     let totalKeluar = 0;
 
 
-    snapshot.forEach((doc, index) => {
+    snapshot.forEach(function(doc, index) {
 
       const d = doc.data();
 
-      const jumlah = Number(d.jumlah || 0);
+      const jumlah =
+        Number(d.jumlah || 0);
 
 
       let pemasukan = 0;
@@ -690,7 +814,9 @@ async function exportExcel() {
 
         totalMasuk += jumlah;
 
-      } else {
+      }
+
+      else {
 
         pengeluaran = jumlah;
 
@@ -703,7 +829,7 @@ async function exportExcel() {
         totalMasuk - totalKeluar;
 
 
-      data.push([
+      rows.push([
 
         index + 1,
 
@@ -728,9 +854,9 @@ async function exportExcel() {
       totalMasuk - totalKeluar;
 
 
-    // ==================================================
-    // BUAT ISI SHEET
-    // ==================================================
+    // ==============================================
+    // DATA EXCEL
+    // ==============================================
 
     const sheetData = [
 
@@ -750,7 +876,7 @@ async function exportExcel() {
         "Saldo"
       ],
 
-      ...data,
+      ...rows,
 
       [""],
 
@@ -765,40 +891,34 @@ async function exportExcel() {
     ];
 
 
-    // ==================================================
-    // BUAT WORKSHEET DENGAN CARA YANG AMAN
-    // ==================================================
+    // ==============================================
+    // BUAT SHEET
+    // ==============================================
 
     const worksheet =
       XLSX.utils.aoa_to_sheet(sheetData);
 
 
-    // ==================================================
+    // ==============================================
     // LEBAR KOLOM
-    // ==================================================
+    // ==============================================
 
     worksheet["!cols"] = [
 
       { wch: 6 },
-
       { wch: 15 },
-
       { wch: 28 },
-
       { wch: 40 },
-
       { wch: 18 },
-
       { wch: 18 },
-
       { wch: 18 }
 
     ];
 
 
-    // ==================================================
+    // ==============================================
     // MERGE JUDUL
-    // ==================================================
+    // ==============================================
 
     worksheet["!merges"] = [
 
@@ -815,14 +935,14 @@ async function exportExcel() {
     ];
 
 
-    // ==================================================
+    // ==============================================
     // FORMAT RUPIAH
-    // ==================================================
+    // ==============================================
 
     const dataStartRow = 5;
 
     const dataEndRow =
-      dataStartRow + data.length - 1;
+      dataStartRow + rows.length - 1;
 
 
     for (
@@ -831,7 +951,6 @@ async function exportExcel() {
       row++
     ) {
 
-      // Pemasukan
       if (worksheet[`E${row}`]) {
 
         worksheet[`E${row}`].z =
@@ -840,7 +959,6 @@ async function exportExcel() {
       }
 
 
-      // Pengeluaran
       if (worksheet[`F${row}`]) {
 
         worksheet[`F${row}`].z =
@@ -849,7 +967,6 @@ async function exportExcel() {
       }
 
 
-      // Saldo
       if (worksheet[`G${row}`]) {
 
         worksheet[`G${row}`].z =
@@ -860,52 +977,21 @@ async function exportExcel() {
     }
 
 
-    // ==================================================
-    // FORMAT RINGKASAN
-    // ==================================================
-
-    const summaryStart =
-      dataEndRow + 3;
-
-
-    if (worksheet[`B${summaryStart}`]) {
-
-      worksheet[`B${summaryStart}`].z =
-        '"Rp" #,##0';
-
-    }
-
-
-    if (worksheet[`B${summaryStart + 1}`]) {
-
-      worksheet[`B${summaryStart + 1}`].z =
-        '"Rp" #,##0';
-
-    }
-
-
-    if (worksheet[`B${summaryStart + 2}`]) {
-
-      worksheet[`B${summaryStart + 2}`].z =
-        '"Rp" #,##0';
-
-    }
-
-
-    // ==================================================
-    // FILTER DATA
-    // ==================================================
+    // ==============================================
+    // FILTER
+    // ==============================================
 
     worksheet["!autofilter"] = {
 
-      ref: `A4:G${dataEndRow}`
+      ref:
+        `A4:G${dataEndRow}`
 
     };
 
 
-    // ==================================================
-    // BUAT WORKBOOK
-    // ==================================================
+    // ==============================================
+    // WORKBOOK
+    // ==============================================
 
     const workbook =
       XLSX.utils.book_new();
@@ -922,9 +1008,9 @@ async function exportExcel() {
     );
 
 
-    // ==================================================
+    // ==============================================
     // NAMA FILE
-    // ==================================================
+    // ==============================================
 
     const sekarang =
       new Date();
@@ -940,9 +1026,9 @@ async function exportExcel() {
       `Laporan_Kas_17_Agustus_${tanggalFile}.xlsx`;
 
 
-    // ==================================================
-    // EXPORT
-    // ==================================================
+    // ==============================================
+    // DOWNLOAD
+    // ==============================================
 
     XLSX.writeFile(
 
@@ -966,19 +1052,20 @@ async function exportExcel() {
   catch (error) {
 
     console.error(
-      "ERROR EXPORT EXCEL:",
+      "EXPORT EXCEL ERROR:",
       error
     );
 
 
     alert(
-      "❌ Gagal membuat file Excel.\n\n" +
+      "❌ Gagal membuat Excel.\n\n" +
       error.message
     );
 
   }
 
 }
+
 
 // ======================================================
 // 📅 FORMAT TANGGAL
