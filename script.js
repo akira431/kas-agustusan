@@ -1487,3 +1487,42 @@ function escapeHTML(text) {
     );
 
 }
+
+// ======================================================
+// 📅 FORMAT TANGGAL
+// ======================================================
+
+function formatTanggal(tanggal) {
+
+  if (!tanggal) {
+    return "-";
+  }
+
+  const parts = String(tanggal).split("-");
+
+  if (parts.length !== 3) {
+    return tanggal;
+  }
+
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+
+// ======================================================
+// 🛡️ ESCAPE HTML
+// ======================================================
+
+function escapeHTML(text) {
+
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+
+
+
