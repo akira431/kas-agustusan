@@ -633,192 +633,291 @@ function closeEdit() {
 
 
 // ======================================================
-// 📊 EXPORT EXCEL
+// 📊 EXPORT EXCEL - LAPORAN RAPI
 // ======================================================
 
 async function exportExcel() {
 
   try {
 
-    // Pastikan library XLSX tersedia
     if (typeof XLSX === "undefined") {
-
-      alert(
-        "Library Excel belum dimuat. " +
-        "Pastikan koneksi internet aktif."
-      );
-
+      alert("Library Excel belum dimuat.");
       return;
-
     }
 
-
-    const snapshot =
-      await db.collection("kas")
-        .orderBy("tanggal", "asc")
-        .get();
-
+    const snapshot = await db.collection("kas")
+      .orderBy("tanggal", "asc")
+      .get();
 
     if (snapshot.empty) {
-
-      alert(
-        "📭 Belum ada data kas untuk diekspor."
-      );
-
+      alert("📭 Belum ada data kas untuk diekspor.");
       return;
-
     }
 
 
-    const dataExcel = [];
+    // ==========================================
+    // DATA
+    // ==========================================
 
+    const rows = [];
 
     let totalMasuk = 0;
-
     let totalKeluar = 0;
-
-
-    // Header laporan
-    dataExcel.push({
-
-      "No": "",
-      "Tanggal": "",
-      "Nama / Sumber": "",
-      "Jumlah": "",
-      "Jenis": "",
-      "Keterangan": ""
-
-    });
 
 
     snapshot.forEach(function(doc, index) {
 
       const d = doc.data();
 
+      const jumlah = Number(d.jumlah || 0);
 
-      const jumlah =
-        Number(d.jumlah || 0);
-
+      let pemasukan = 0;
+      let pengeluaran = 0;
 
       if (d.tipe === "masuk") {
 
+        pemasukan = jumlah;
         totalMasuk += jumlah;
 
       } else {
 
+        pengeluaran = jumlah;
         totalKeluar += jumlah;
 
       }
 
 
-      dataExcel.push({
-
-        "No": index + 1,
-
-        "Tanggal": d.tanggal || "",
-
-        "Nama / Sumber":
-          d.nama || "",
-
-        "Jumlah":
-          jumlah,
-
-        "Jenis":
-          d.tipe === "masuk"
-            ? "Pemasukan"
-            : "Pengeluaran",
-
-        "Keterangan":
-          d.keterangan || ""
-
-      });
-
-    });
-
-
-    // Baris kosong
-    dataExcel.push({});
-
-
-    // Ringkasan
-    dataExcel.push({
-
-      "Nama / Sumber":
-        "TOTAL PEMASUKAN",
-
-      "Jumlah":
-        totalMasuk
-
-    });
-
-
-    dataExcel.push({
-
-      "Nama / Sumber":
-        "TOTAL PENGELUARAN",
-
-      "Jumlah":
-        totalKeluar
-
-    });
-
-
-    dataExcel.push({
-
-      "Nama / Sumber":
-        "SALDO AKHIR",
-
-      "Jumlah":
+      rows.push([
+        index + 1,
+        d.tanggal || "",
+        d.nama || "",
+        d.keterangan || "",
+        pemasukan,
+        pengeluaran,
         totalMasuk - totalKeluar
+      ]);
 
     });
 
 
-    // Buat worksheet
-    const worksheet =
-      XLSX.utils.json_to_sheet(
-        dataExcel
-      );
+    const saldoAkhir =
+      totalMasuk - totalKeluar;
 
 
-    // Lebar kolom
-    worksheet["!cols"] = [
+    // ==========================================
+    // WORKSHEET
+    // ==========================================
 
-      { wch: 6 },
+    const worksheet = {};
 
-      { wch: 15 },
 
-      { wch: 28 },
+    // Judul
+    XLSX.utils.sheet_add_aoa(
+      worksheet,
+      [
+        ["LAPORAN KAS 17 AGUSTUS"],
+        ["Laporan Keuangan Kegiatan"],
+        [""],
+        [
+          "No",
+          "Tanggal",
+          "Nama / Sumber",
+          "Keterangan",
+          "Pemasukan",
+          "Pengeluaran",
+          "Saldo"
+        ]
+      ],
+      {
+        origin: "A1"
+      }
+    );
 
-      { wch: 18 },
 
-      { wch: 18 },
+    // Data
+    XLSX.utils.sheet_add_aoa(
+      worksheet,
+      rows,
+      {
+        origin: "A5"
+      }
+    );
 
-      { wch: 40 }
+
+    // ==========================================
+    // RINGKASAN
+    // ==========================================
+
+    const summaryRow =
+      5 + rows.length + 1;
+
+
+    XLSX.utils.sheet_add_aoa(
+      worksheet,
+      [
+        ["RINGKASAN KEUANGAN"],
+        ["Total Pemasukan", totalMasuk],
+        ["Total Pengeluaran", totalKeluar],
+        ["Saldo Akhir", saldoAkhir]
+      ],
+      {
+        origin: `A${summaryRow}`
+      }
+    );
+
+
+    // ==========================================
+    // MERGE JUDUL
+    // ==========================================
+
+    worksheet["!merges"] = [
+
+      {
+        s: { r: 0, c: 0 },
+        e: { r: 0, c: 6 }
+      },
+
+      {
+        s: { r: 1, c: 0 },
+        e: { r: 1, c: 6 }
+      },
+
+      {
+        s: {
+          r: summaryRow - 1,
+          c: 0
+        },
+
+        e: {
+          r: summaryRow - 1,
+          c: 6
+        }
+      }
 
     ];
 
 
-    // Workbook
+    // ==========================================
+    // LEBAR KOLOM
+    // ==========================================
+
+    worksheet["!cols"] = [
+
+      { wch: 6 },   // No
+
+      { wch: 15 },  // Tanggal
+
+      { wch: 28 },  // Nama
+
+      { wch: 40 },  // Keterangan
+
+      { wch: 18 },  // Pemasukan
+
+      { wch: 18 },  // Pengeluaran
+
+      { wch: 18 }   // Saldo
+
+    ];
+
+
+    // ==========================================
+    // FORMAT RUPIAH
+    // ==========================================
+
+    const dataStart = 5;
+
+    const dataEnd =
+      dataStart + rows.length - 1;
+
+
+    for (
+      let row = dataStart;
+      row <= dataEnd;
+      row++
+    ) {
+
+      // Pemasukan
+      if (worksheet[`E${row}`]) {
+
+        worksheet[`E${row}`].z =
+          '"Rp" #,##0';
+
+      }
+
+
+      // Pengeluaran
+      if (worksheet[`F${row}`]) {
+
+        worksheet[`F${row}`].z =
+          '"Rp" #,##0';
+
+      }
+
+
+      // Saldo
+      if (worksheet[`G${row}`]) {
+
+        worksheet[`G${row}`].z =
+          '"Rp" #,##0';
+
+      }
+
+    }
+
+
+    // Format summary
+    worksheet[`B${summaryRow + 1}`].z =
+      '"Rp" #,##0';
+
+    worksheet[`B${summaryRow + 2}`].z =
+      '"Rp" #,##0';
+
+    worksheet[`B${summaryRow + 3}`].z =
+      '"Rp" #,##0';
+
+
+    // ==========================================
+    // EXCEL TABLE
+    // ==========================================
+
+    worksheet["!autofilter"] = {
+
+      ref:
+        `A4:G${dataEnd}`
+
+    };
+
+
+    // Freeze header
+    worksheet["!freeze"] = {
+
+      xSplit: 0,
+
+      ySplit: 4
+
+    };
+
+
+    // ==========================================
+    // WORKBOOK
+    // ==========================================
+
     const workbook =
       XLSX.utils.book_new();
 
 
     XLSX.utils.book_append_sheet(
-
       workbook,
-
       worksheet,
-
-      "Kas Agustusan"
-
+      "Laporan Kas"
     );
 
 
-    // Nama file
-    const sekarang =
-      new Date();
+    // ==========================================
+    // FILE NAME
+    // ==========================================
 
+    const sekarang = new Date();
 
     const tanggalFile =
       sekarang
@@ -827,21 +926,21 @@ async function exportExcel() {
 
 
     const namaFile =
-      `Laporan_Kas_Agustusan_${tanggalFile}.xlsx`;
+      `Laporan_Kas_17_Agustus_${tanggalFile}.xlsx`;
 
 
-    // Download
+    // ==========================================
+    // DOWNLOAD
+    // ==========================================
+
     XLSX.writeFile(
-
       workbook,
-
       namaFile
-
     );
 
 
     alert(
-      "✅ Laporan berhasil diekspor ke Excel!"
+      "✅ Laporan Excel berhasil dibuat!"
     );
 
   }
@@ -853,16 +952,14 @@ async function exportExcel() {
       error
     );
 
-
     alert(
-      "❌ Gagal mengekspor Excel.\n\n" +
+      "❌ Gagal membuat Excel.\n\n" +
       error.message
     );
 
   }
 
 }
-
 
 // ======================================================
 // 📅 FORMAT TANGGAL
