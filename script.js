@@ -1113,33 +1113,32 @@ function closeEdit() {
 
 
 // ======================================================
-// 📊 EXPORT EXCEL
+// 📊 EXPORT EXCEL - EXCELJS
 // ======================================================
 
 async function exportExcel() {
 
   try {
 
-    if (
-      typeof XLSX ===
-      "undefined"
-    ) {
+    // Cek library ExcelJS
+    if (typeof ExcelJS === "undefined") {
 
       alert(
-        "❌ Library Excel belum dimuat."
+        "❌ Library Excel belum dimuat.\n\n" +
+        "Pastikan ExcelJS sudah dipasang di dashboard_baru.html."
       );
 
       return;
-
     }
 
 
+    // ==================================================
+    // AMBIL DATA FIRESTORE
+    // ==================================================
+
     const snapshot =
       await db.collection("kas")
-        .orderBy(
-          "tanggal",
-          "asc"
-        )
+        .orderBy("tanggal", "asc")
         .get();
 
 
@@ -1150,9 +1149,112 @@ async function exportExcel() {
       );
 
       return;
-
     }
 
+
+    // ==================================================
+    // BUAT WORKBOOK
+    // ==================================================
+
+    const workbook =
+      new ExcelJS.Workbook();
+
+
+    workbook.creator =
+      "Sistem Kas 17 Agustus";
+
+    workbook.lastModifiedBy =
+      "Sistem Kas 17 Agustus";
+
+    workbook.created =
+      new Date();
+
+    workbook.modified =
+      new Date();
+
+
+    const worksheet =
+      workbook.addWorksheet(
+        "Laporan Kas"
+      );
+
+
+    // ==================================================
+    // JUDUL
+    // ==================================================
+
+    worksheet.mergeCells(
+      "A1:G1"
+    );
+
+    worksheet.getCell("A1").value =
+      "LAPORAN KAS 17 AGUSTUS";
+
+
+    worksheet.getCell("A1").font = {
+
+      bold: true,
+      size: 18
+
+    };
+
+
+    worksheet.getCell("A1").alignment = {
+
+      horizontal: "center",
+      vertical: "middle"
+
+    };
+
+
+    worksheet.getRow(1).height =
+      30;
+
+
+    // ==================================================
+    // SUB JUDUL
+    // ==================================================
+
+    worksheet.mergeCells(
+      "A2:G2"
+    );
+
+
+    worksheet.getCell("A2").value =
+      "Laporan Keuangan Kegiatan";
+
+
+    worksheet.getCell("A2").font = {
+
+      italic: true,
+      size: 11
+
+    };
+
+
+    worksheet.getCell("A2").alignment = {
+
+      horizontal: "center",
+      vertical: "middle"
+
+    };
+
+
+    worksheet.getRow(2).height =
+      22;
+
+
+    // ==================================================
+    // SPASI
+    // ==================================================
+
+    worksheet.getRow(3).height =
+      8;
+
+
+    // ==================================================
+    // DATA
+    // ==================================================
 
     const rows = [];
 
@@ -1168,18 +1270,14 @@ async function exportExcel() {
 
 
         const jumlah =
-          Number(
-            d.jumlah || 0
-          );
+          Number(d.jumlah || 0);
 
 
         let pemasukan = 0;
         let pengeluaran = 0;
 
 
-        if (
-          d.tipe === "masuk"
-        ) {
+        if (d.tipe === "masuk") {
 
           pemasukan =
             jumlah;
@@ -1205,21 +1303,80 @@ async function exportExcel() {
           totalKeluar;
 
 
-        rows.push([
+        rows.push({
 
-          index + 1,
+          no: index + 1,
 
-          d.tanggal || "",
+          tanggal:
+            d.tanggal || "",
 
-          d.nama || "",
+          nama:
+            d.nama || "",
 
-          d.keterangan || "",
+          keterangan:
+            d.keterangan || "",
 
-          pemasukan,
+          pemasukan:
+            pemasukan,
 
-          pengeluaran,
+          pengeluaran:
+            pengeluaran,
 
-          saldo
+          saldo:
+            saldo
+
+        });
+
+      }
+    );
+
+
+    // ==================================================
+    // HEADER TABEL
+    // ==================================================
+
+    const headerRow =
+      worksheet.addRow([
+
+        "No",
+
+        "Tanggal",
+
+        "Nama / Sumber",
+
+        "Keterangan",
+
+        "Pemasukan",
+
+        "Pengeluaran",
+
+        "Saldo"
+
+      ]);
+
+
+    // ==================================================
+    // DATA TABEL
+    // ==================================================
+
+    rows.forEach(
+      function(item) {
+
+        worksheet.addRow([
+
+          item.no,
+
+          item.tanggal,
+
+          item.nama,
+
+          item.keterangan,
+
+          item.pemasukan,
+
+          item.pengeluaran,
+
+          item.saldo
 
         ]);
 
@@ -1227,199 +1384,483 @@ async function exportExcel() {
     );
 
 
-    const sheetData = [
+    // ==================================================
+    // BUAT EXCEL TABLE ASLI
+    // ==================================================
 
-      [
-        "LAPORAN KAS 17 AGUSTUS"
-      ],
-
-      [
-        "Laporan Keuangan Kegiatan"
-      ],
-
-      [""],
-
-      [
-        "No",
-        "Tanggal",
-        "Nama / Sumber",
-        "Keterangan",
-        "Pemasukan",
-        "Pengeluaran",
-        "Saldo"
-      ],
-
-      ...rows,
-
-      [""],
-
-      [
-        "RINGKASAN KEUANGAN"
-      ],
-
-      [
-        "Total Pemasukan",
-        totalMasuk
-      ],
-
-      [
-        "Total Pengeluaran",
-        totalKeluar
-      ],
-
-      [
-        "Saldo Akhir",
-        totalMasuk -
-        totalKeluar
-      ]
-
-    ];
+    const firstDataRow =
+      headerRow.number;
 
 
-    const worksheet =
-      XLSX.utils.aoa_to_sheet(
-        sheetData
-      );
+    const lastDataRow =
+      worksheet.lastRow.number;
 
 
-    worksheet["!cols"] = [
+    worksheet.addTable({
 
-      { wch: 6 },
+      name:
+        "TabelKas17Agustus",
 
-      { wch: 15 },
+      ref:
+        `A${firstDataRow}:G${lastDataRow}`,
 
-      { wch: 28 },
+      headerRow:
+        true,
 
-      { wch: 40 },
+      totalsRow:
+        false,
 
-      { wch: 18 },
+      style: {
 
-      { wch: 18 },
+        theme:
+          "TableStyleMedium2",
 
-      { wch: 18 }
+        showFirstColumn:
+          false,
 
-    ];
+        showLastColumn:
+          false,
 
+        showRowStripes:
+          true,
 
-    worksheet["!merges"] = [
+        showColumnStripes:
+          false
 
-      {
-        s: {
-          r: 0,
-          c: 0
-        },
-
-        e: {
-          r: 0,
-          c: 6
-        }
-      },
-
-      {
-        s: {
-          r: 1,
-          c: 0
-        },
-
-        e: {
-          r: 1,
-          c: 6
-        }
       }
 
-    ];
+    });
 
 
-    const dataStartRow = 5;
+    // ==================================================
+    // FORMAT HEADER
+    // ==================================================
 
-    const dataEndRow =
-      dataStartRow +
-      rows.length -
-      1;
+    headerRow.eachCell(
+      function(cell) {
 
+        cell.font = {
+
+          bold: true,
+          size: 11
+
+        };
+
+
+        cell.alignment = {
+
+          horizontal: "center",
+          vertical: "middle"
+
+        };
+
+      }
+    );
+
+
+    headerRow.height =
+      24;
+
+
+    // ==================================================
+    // FORMAT DATA
+    // ==================================================
 
     for (
-      let row = dataStartRow;
-      row <= dataEndRow;
+      let row = firstDataRow + 1;
+      row <= lastDataRow;
       row++
     ) {
 
-      if (
-        worksheet[`E${row}`]
-      ) {
-
-        worksheet[`E${row}`].z =
-          '"Rp" #,##0';
-
-      }
+      const currentRow =
+        worksheet.getRow(row);
 
 
-      if (
-        worksheet[`F${row}`]
-      ) {
+      // No
+      currentRow.getCell(1)
+        .alignment = {
 
-        worksheet[`F${row}`].z =
-          '"Rp" #,##0';
+          horizontal:
+            "center"
 
-      }
+        };
 
 
-      if (
-        worksheet[`G${row}`]
-      ) {
+      // Tanggal
+      currentRow.getCell(2)
+        .alignment = {
 
-        worksheet[`G${row}`].z =
-          '"Rp" #,##0';
+          horizontal:
+            "center"
 
-      }
+        };
+
+
+      // Rupiah
+      currentRow.getCell(5)
+        .numFmt =
+        '"Rp" #,##0';
+
+
+      currentRow.getCell(6)
+        .numFmt =
+        '"Rp" #,##0';
+
+
+      currentRow.getCell(7)
+        .numFmt =
+        '"Rp" #,##0';
+
+
+      // Rata kanan uang
+      currentRow.getCell(5)
+        .alignment = {
+
+          horizontal:
+            "right"
+
+        };
+
+
+      currentRow.getCell(6)
+        .alignment = {
+
+          horizontal:
+            "right"
+
+        };
+
+
+      currentRow.getCell(7)
+        .alignment = {
+
+          horizontal:
+            "right"
+
+        };
 
     }
 
 
-    worksheet["!autofilter"] = {
+    // ==================================================
+    // LEBAR KOLOM
+    // ==================================================
 
-      ref:
-        `A4:G${dataEndRow}`
+    worksheet.getColumn(1).width =
+      7;
+
+
+    worksheet.getColumn(2).width =
+      15;
+
+
+    worksheet.getColumn(3).width =
+      28;
+
+
+    worksheet.getColumn(4).width =
+      40;
+
+
+    worksheet.getColumn(5).width =
+      18;
+
+
+    worksheet.getColumn(6).width =
+      18;
+
+
+    worksheet.getColumn(7).width =
+      18;
+
+
+    // ==================================================
+    // WRAP TEXT
+    // ==================================================
+
+    for (
+      let row = firstDataRow + 1;
+      row <= lastDataRow;
+      row++
+    ) {
+
+      worksheet.getRow(row)
+        .getCell(3)
+        .alignment = {
+
+          vertical: "top",
+          wrapText: true
+
+        };
+
+
+      worksheet.getRow(row)
+        .getCell(4)
+        .alignment = {
+
+          vertical: "top",
+          wrapText: true
+
+        };
+
+    }
+
+
+    // ==================================================
+    // RINGKASAN
+    // ==================================================
+
+    const summaryStart =
+      lastDataRow + 3;
+
+
+    worksheet.mergeCells(
+      `A${summaryStart}:B${summaryStart}`
+    );
+
+
+    worksheet.getCell(
+      `A${summaryStart}`
+    ).value =
+      "RINGKASAN KEUANGAN";
+
+
+    worksheet.getCell(
+      `A${summaryStart}`
+    ).font = {
+
+      bold: true,
+      size: 13
 
     };
 
 
-    const workbook =
-      XLSX.utils.book_new();
+    worksheet.getCell(
+      `A${summaryStart}`
+    ).alignment = {
+
+      horizontal:
+        "left"
+
+    };
 
 
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      "Laporan Kas"
-    );
+    // Total pemasukan
+    worksheet.getCell(
+      `A${summaryStart + 1}`
+    ).value =
+      "Total Pemasukan";
+
+
+    worksheet.getCell(
+      `B${summaryStart + 1}`
+    ).value =
+      totalMasuk;
+
+
+    worksheet.getCell(
+      `B${summaryStart + 1}`
+    ).numFmt =
+      '"Rp" #,##0';
+
+
+    // Total pengeluaran
+    worksheet.getCell(
+      `A${summaryStart + 2}`
+    ).value =
+      "Total Pengeluaran";
+
+
+    worksheet.getCell(
+      `B${summaryStart + 2}`
+    ).value =
+      totalKeluar;
+
+
+    worksheet.getCell(
+      `B${summaryStart + 2}`
+    ).numFmt =
+      '"Rp" #,##0';
+
+
+    // Saldo
+    worksheet.getCell(
+      `A${summaryStart + 3}`
+    ).value =
+      "Saldo Akhir";
+
+
+    worksheet.getCell(
+      `B${summaryStart + 3}`
+    ).value =
+      totalMasuk -
+      totalKeluar;
+
+
+    worksheet.getCell(
+      `B${summaryStart + 3}`
+    ).numFmt =
+      '"Rp" #,##0';
+
+
+    // Tebalkan ringkasan
+    for (
+      let row = summaryStart;
+      row <= summaryStart + 3;
+      row++
+    ) {
+
+      worksheet.getRow(row)
+        .getCell(1)
+        .font = {
+
+          bold: true
+
+        };
+
+    }
+
+
+    // ==================================================
+    // FREEZE HEADER
+    // ==================================================
+
+    worksheet.views = [
+
+      {
+
+        state: "frozen",
+
+        ySplit:
+          firstDataRow
+
+      }
+
+    ];
+
+
+    // ==================================================
+    // BORDER DATA
+    // ==================================================
+
+    for (
+      let row = firstDataRow;
+      row <= lastDataRow;
+      row++
+    ) {
+
+      worksheet.getRow(row)
+        .eachCell(
+          function(cell) {
+
+            cell.border = {
+
+              top: {
+                style: "thin"
+              },
+
+              left: {
+                style: "thin"
+              },
+
+              bottom: {
+                style: "thin"
+              },
+
+              right: {
+                style: "thin"
+              }
+
+            };
+
+          }
+        );
+
+    }
+
+
+    // ==================================================
+    // BUAT FILE XLSX
+    // ==================================================
+
+    const buffer =
+      await workbook.xlsx
+        .writeBuffer();
+
+
+    const blob =
+      new Blob(
+        [buffer],
+        {
+          type:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+      );
+
+
+    // ==================================================
+    // DOWNLOAD
+    // ==================================================
+
+    const url =
+      window.URL.createObjectURL(
+        blob
+      );
+
+
+    const link =
+      document.createElement("a");
+
+
+    link.href =
+      url;
 
 
     const sekarang =
       new Date();
 
 
-    const tanggalFile =
-      sekarang
-        .toISOString()
-        .slice(0, 10);
+    const tahun =
+      sekarang.getFullYear();
 
 
-    XLSX.writeFile(
+    const bulan =
+      String(
+        sekarang.getMonth() + 1
+      ).padStart(2, "0");
 
-      workbook,
 
-      `Laporan_Kas_17_Agustus_${tanggalFile}.xlsx`,
+    const hari =
+      String(
+        sekarang.getDate()
+      ).padStart(2, "0");
 
-      {
-        bookType: "xlsx"
-      }
 
+    link.download =
+      `Laporan_Kas_17_Agustus_${tahun}-${bulan}-${hari}.xlsx`;
+
+
+    document.body.appendChild(
+      link
+    );
+
+
+    link.click();
+
+
+    document.body.removeChild(
+      link
+    );
+
+
+    window.URL.revokeObjectURL(
+      url
     );
 
 
     alert(
-      "✅ File Excel berhasil dibuat!"
+      "✅ Excel berhasil dibuat!\n\n" +
+      "File sudah menggunakan tabel Excel asli."
     );
 
   }
@@ -1440,7 +1881,6 @@ async function exportExcel() {
   }
 
 }
-
 
 // ======================================================
 // 📅 FORMAT TANGGAL
